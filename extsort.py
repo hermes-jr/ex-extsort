@@ -21,8 +21,8 @@ memAvail = int(0.6 * memTotal)
 
 """ ...or less """
 #memAvail = 1.4 * 1073741824 # ~1.4G
-#memAvail = 400 * 1048576 # ~400M
-memAvail = 100 * 1048576 # ~100M
+memAvail = 400 * 1048576 # ~400M
+#memAvail = 100 * 1048576 # ~100M
 
 sourceFile = open('./data.dat', 'r')
 
