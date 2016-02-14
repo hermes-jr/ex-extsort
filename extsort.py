@@ -67,7 +67,7 @@ while(True):
 # phase 2: combine chunks
 q = Queue.PriorityQueue()
 
-resultFile = open('./result.dat', 'w+')
+resultFile = open('./result.dat', 'a+')
 
 chunkFiles = dict()
 
@@ -76,17 +76,40 @@ for iter in xrange(chunksNum):
 	chunkFiles.update({iter: open('./chunk.{}'.format(iter), 'r')})
 	q.put((chunkFiles[iter].readline().rstrip('\n').rstrip('\r'), iter))
 
+""" Do less writes to resulting file, use batches """
+currentChunkData = []
+usedSize = sys.getsizeof(currentChunkData)
+
 while not q.empty():
 	first = q.get() # Returns min value in priority queue
 
 	usedChunk = first[1]
 	usedStr = first[0]
-	resultFile.write("{}\n".format(usedStr))
+
+	# Write speedup
+	""" Again, total memory used by list is about: 36 + 16 * line.len() bytes """
+	lineSize = sys.getsizeof(usedStr) + 16
+	usedSize += lineSize
+	currentChunkData.append(usedStr)
+
+	""" Dump data to disk only if all memory is used """
+	if(usedSize + lineSize * 2 >= memAvail):
+		for item in currentChunkData:
+			resultFile.write("{}\n".format(item))
+
+		""" Free memory, reset used memory counter """
+		del currentChunkData[:]
+		usedSize = sys.getsizeof(currentChunkData)
+
 	newl = chunkFiles[usedChunk].readline()
 	if(newl != ""):
 		q.put((newl.rstrip('\n').rstrip('\r'), usedChunk))
 	else:
 		chunkFiles[usedChunk].close()
 		os.remove('./chunk.{}'.format(usedChunk))
+
+""" Another dirty workaround: flush all data left in memory """
+for item in currentChunkData:
+	resultFile.write("{}\n".format(item))
 
 resultFile.close()
