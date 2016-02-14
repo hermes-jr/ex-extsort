@@ -46,6 +46,7 @@ while(True):
 		if(usedSize + lineSize * 2 < memAvail):
 			continue
 
+	""" Allocated memory is full, now sort the dataset in memory with anyconventional algorithm """
 	currentChunkData.sort()
 
 	chunkFile = open('./chunk.{}'.format(chunksNum), 'w+')
@@ -54,30 +55,32 @@ while(True):
 		chunkFile.write("{}\n".format(item))
 	chunkFile.close()
 
+	""" Free memory, reset used memory counter """
 	del currentChunkData[:]
 	usedSize = sys.getsizeof(currentChunkData)
 	chunksNum += 1
 
+	""" EOF """
 	if(rawLine == ''):
 		break
 
-# phase 2: combine them
+# phase 2: combine chunks
 q = Queue.PriorityQueue()
 
 resultFile = open('./result.dat', 'w+')
 
 chunkFiles = dict()
 
+""" Priority queue holds a first line for each pre-sorted chunk (min value in each file) """
 for iter in xrange(chunksNum):
 	chunkFiles.update({iter: open('./chunk.{}'.format(iter), 'r')})
 	q.put((chunkFiles[iter].readline().rstrip('\n').rstrip('\r'), iter))
 
-
 while not q.empty():
-	sux = q.get()
+	first = q.get() # Returns min value in priority queue
 
-	usedChunk = sux[1]
-	usedStr = sux[0]
+	usedChunk = first[1]
+	usedStr = first[0]
 	resultFile.write("{}\n".format(usedStr))
 	newl = chunkFiles[usedChunk].readline()
 	if(newl != ""):
