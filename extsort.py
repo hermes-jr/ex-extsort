@@ -15,6 +15,10 @@ import os
 import sys
 import Queue
 
+def dumptofile(dfile, dlist):
+	for item in dlist:
+		dfile.write("{}\n".format(item))
+
 """ Use about 60% of total memory by default"""
 memTotal = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
 memAvail = int(0.6 * memTotal)
@@ -50,9 +54,7 @@ while(True):
 	currentChunkData.sort()
 
 	chunkFile = open('./chunk.{}'.format(chunksNum), 'w+')
-	# chunkFile.writelines(currentChunkData) # doesn't add newlines
-	for item in currentChunkData:
-		chunkFile.write("{}\n".format(item))
+	dumptofile(chunkFile, currentChunkData)
 	chunkFile.close()
 
 	""" Free memory, reset used memory counter """
@@ -94,8 +96,7 @@ while not q.empty():
 
 	""" Dump data to disk only if all memory is used """
 	if(usedSize + lineSize * 2 >= memAvail):
-		for item in currentChunkData:
-			resultFile.write("{}\n".format(item))
+		dumptofile(resultFile, currentChunkData)
 
 		""" Free memory, reset used memory counter """
 		del currentChunkData[:]
@@ -108,8 +109,7 @@ while not q.empty():
 		chunkFiles[usedChunk].close()
 		os.remove('./chunk.{}'.format(usedChunk))
 
-""" Another dirty workaround: flush all data left in memory """
-for item in currentChunkData:
-	resultFile.write("{}\n".format(item))
+""" Another dirty workaround: flush remaining data """
+dumptofile(resultFile, currentChunkData)
 
 resultFile.close()
